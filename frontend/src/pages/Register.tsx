@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router";
+import { hideLoading, showLoading } from "../redux/features/alertSlice";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 interface PasswordRules {
   minLength: boolean;
@@ -22,6 +26,8 @@ const Register = (props: Props) => {
   );
   const [isPasswordValid, setIsPasswordValid] = useState<boolean>(false);
   const [doPasswordsMatch, setDoPasswordsMatch] = useState<boolean>(true);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const validatePassword = (password: string): PasswordRules => {
     return {
@@ -31,6 +37,26 @@ const Register = (props: Props) => {
       containsNumber: /\d/.test(password),
       containsSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
     };
+  };
+
+  const registerHandler = async (e) => {
+    try {
+      e.preventDefault();
+      dispatch(showLoading());
+      const input = {name,email,password}
+      const res = await axios.post("/api/v1/user/register", input);
+      dispatch(hideLoading());
+      if (res.data.success) {
+        toast.success("Register successfully");
+        navigate("/login");
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (error) {
+      dispatch(hideLoading());
+      console.log(error);
+      toast.error("Something went wrong");
+    }
   };
 
   const validateEmail = (email: string): boolean => {
@@ -74,7 +100,7 @@ const Register = (props: Props) => {
 
   return (
     <div className="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700">
-      <form className="space-y-6" action="#">
+      <form className="space-y-6">
         <h5 className="text-xl font-medium text-gray-900 dark:text-white">
           Create an account
         </h5>
@@ -113,9 +139,9 @@ const Register = (props: Props) => {
             placeholder="name@company.com"
             required
           />
-        {!isEmailValid && (
-          <p className="text-red-500">Please enter a valid email address.</p>
-        )}
+          {!isEmailValid && (
+            <p className="text-red-500">Please enter a valid email address.</p>
+          )}
         </div>
         <div>
           <label
@@ -200,6 +226,7 @@ const Register = (props: Props) => {
         </div>
         <button
           type="submit"
+          onClick={(e)=>registerHandler(e)}
           disabled={!isPasswordValid || !doPasswordsMatch}
           className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
         >
