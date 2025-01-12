@@ -1,6 +1,7 @@
 const userModel = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const Joi = require("joi");
+const jwt = require("jsonwebtoken");
 
 const registerValidationSchema = Joi.object({
   name: Joi.string().min(3).max(30).required().messages({
@@ -66,4 +67,94 @@ const registerController = async (req, res) => {
   }
 };
 
-module.exports = { registerController };
+const loginController = async (req, res) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required().messages({
+      "string.email": "Invalid email format",
+      "any.required": "Email is required",
+    }),
+    password: Joi.string().min(6).required().messages({
+      "string.min": "Password must be at least 6 characters",
+      "any.required": "Password is required",
+    }),
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    return res
+      .status(400)
+      .send({ success: false, message: error.details[0].message });
+  }
+
+  try {
+    const user = await userModel.findOne({ email: req.body.email });
+    if (!user) {
+      return res
+        .status(404)
+        .send({ success: false, message: "User does not exist" });
+    }
+
+    const isMatch = await bcrypt.compare(req.body.password, user.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .send({ success: false, message: "Invalid email or password" });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+    res.status(200).send({ success: true, message: "Login success", token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      success: false,
+      message: `Error in login controller: ${error.message}`,
+    });
+  }
+};
+
+const authController = async (req, res) => {
+  const authSchema = Joi.object({
+    userId: Joi.string()
+      .required()
+      .regex(/^[a-fA-F0-9]{24}$/)
+      .messages({
+        "string.pattern.base": "Invalid userId format.",
+        "any.required": "userId is required.",
+      }),
+  });
+  try {
+    const { error } = authSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({
+        success: false,
+        message: error.details[0].message,
+      });
+    }
+
+    // Find the user in the database
+    const user = await userModel.findOne({ _id: req.body.userId });
+
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    user.password = undefined; // Exclude password from the response
+    return res.status(200).send({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      success: false,
+      message: "Auth error.",
+    });
+  }
+};
+
+module.exports = { registerController, loginController, authController };

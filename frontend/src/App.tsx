@@ -2,7 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Layout from "./layout/Layout";
-import { ToastContainer} from "react-toastify";
+import { ToastContainer } from "react-toastify";
+import Login from "./pages/Login";
+import PublicRoute from "./components/PublicRoute";
 
 function App() {
   return (
@@ -11,8 +13,30 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="register" element={<Register />} />
+            <Route
+              index
+              element={
+                <PublicRoute>
+                  <Home />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="register"
+              element={
+                <PublicRoute>
+                  <Register />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="login"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+            />
           </Route>
         </Routes>
       </BrowserRouter>
