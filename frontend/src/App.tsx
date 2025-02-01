@@ -5,6 +5,7 @@ import Layout from "./layout/Layout";
 import { ToastContainer } from "react-toastify";
 import Login from "./pages/Login";
 import PublicRoute from "./components/PublicRoute";
+import Lesson from "./pages/Lesson";
 
 function App() {
   return (
@@ -34,6 +35,14 @@ function App() {
               element={
                 <PublicRoute>
                   <Login />
+                </PublicRoute>
+              }
+            />
+                        <Route
+              path="lesson"
+              element={
+                <PublicRoute>
+                  <Lesson />
                 </PublicRoute>
               }
             />
