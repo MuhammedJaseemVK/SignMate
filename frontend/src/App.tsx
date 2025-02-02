@@ -7,6 +7,8 @@ import Login from "./pages/Login";
 import PublicRoute from "./components/PublicRoute";
 import Lesson from "./pages/Lesson";
 import ProtectedRoute from "./components/ProtectedRoutes";
+import Courses from "./pages/Courses";
+import Lessons from "./pages/Lessons";
 
 function App() {
   return (
@@ -40,13 +42,29 @@ function App() {
               }
             />
             <Route
-              path="lesson"
+              path="courses"
               element={
                 <ProtectedRoute>
-                  <Lesson />
+                  <Courses />
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="courses/:courseId/lessons"
+              element={
+                <ProtectedRoute>
+                  <Lessons />
+                </ProtectedRoute>
+              }
+            />
+              <Route
+                path="courses/:courseId/lessons/:lessonId"
+                element={
+                  <ProtectedRoute>
+                    <Lesson />
+                  </ProtectedRoute>
+                }
+              />
           </Route>
         </Routes>
       </BrowserRouter>
