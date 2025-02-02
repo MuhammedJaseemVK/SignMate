@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import Login from "./pages/Login";
 import PublicRoute from "./components/PublicRoute";
 import Lesson from "./pages/Lesson";
+import ProtectedRoute from "./components/ProtectedRoutes";
 
 function App() {
   return (
@@ -38,12 +39,12 @@ function App() {
                 </PublicRoute>
               }
             />
-                        <Route
+            <Route
               path="lesson"
               element={
-                <PublicRoute>
+                <ProtectedRoute>
                   <Lesson />
-                </PublicRoute>
+                </ProtectedRoute>
               }
             />
           </Route>
