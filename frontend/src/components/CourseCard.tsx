@@ -2,10 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 type Props = {
+  id:string
   title: string;
   progress: number;
   description: string;
-  id:number
 };
 
 const CourseCard = ({ id,title, progress, description }: Props) => {

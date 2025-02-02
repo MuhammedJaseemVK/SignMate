@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Name is required"],
       trim: true,
+      unique: true,
       minlength: [3, "Name must be at least 3 characters long"],
     },
     email: {
@@ -30,6 +31,12 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "parent"],
       default: "user",
     },
+    isAdmin:{
+      type:Boolean,
+      default:false
+    },
+    completedLessons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lesson" }],
+    xp: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

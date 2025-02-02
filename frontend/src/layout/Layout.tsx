@@ -5,7 +5,7 @@ export default function Layout() {
   return (
     <div className="w-full">
       <Navbar />
-      <div className="flex w-full justify-center items-center h-screen">
+      <div className="flex w-full justify-center items-center min-h-screen">
         <Outlet />
       </div>
     </div>

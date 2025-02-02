@@ -157,4 +157,42 @@ const authController = async (req, res) => {
   }
 };
 
-module.exports = { registerController, loginController, authController };
+const markLessonAsCompleted = async (req, res) => {
+  try {
+    const { lessonId } = req.body;
+    const user = await User.findById(req.params.userId);
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (!user.completedLessons.includes(lessonId)) {
+      user.completedLessons.push(lessonId);
+      user.xp += 10; // Award XP only for the first completion
+      await user.save();
+    }
+
+    res.json({ message: "Lesson marked as completed", user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get user progress (completed lessons & XP)
+const getUserProgress = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).populate(
+      "completedLessons"
+    );
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ completedLessons: user.completedLessons, xp: user.xp });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = {
+  registerController,
+  loginController,
+  authController,
+  markLessonAsCompleted,
+  getUserProgress,
+};
