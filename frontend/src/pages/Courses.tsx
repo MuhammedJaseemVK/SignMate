@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import CourseCard from "../components/CourseCard";
 import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { setCourses } from '../redux/features/coursesSlice';
 
 type Props = {};
 
@@ -12,7 +14,8 @@ type Course ={
 }
 
 const Courses = (props: Props) => {
-  const [courseList,setCourseList] =useState<Course[]>([]);
+  const {courses} = useSelector(state=>state.courses);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const getCourses = async () => {
@@ -24,7 +27,9 @@ const Courses = (props: Props) => {
       });
         // dispatch(hideLoading());
         if (res.data.success) {
-          setCourseList(res.data.data);
+          const courseList =res.data.data;
+          // setCourseList(courses);
+          dispatch(setCourses(courseList));
         }
       } catch (error) {
         // dispatch(hideLoading());
@@ -40,7 +45,7 @@ const Courses = (props: Props) => {
         My courses
       </h2>
       <div className="flex flex-col gap-4">
-        {courseList.map((course) => (
+        {courses.map((course:Course) => (
           <CourseCard
             key={course.id}
             id={course.id}

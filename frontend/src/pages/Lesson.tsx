@@ -7,6 +7,7 @@ const Lesson = () => {
     useState<boolean>(false);
   const webcamRef = useRef(null);
   const socketRef = useRef(null);
+  const hasLessonCompleteSpoken = useRef<boolean>(false);
   let frameInterval = null;
 
   const clientId = useRef(uuidv4()); // Generate a unique ID for each user
@@ -22,8 +23,12 @@ const Lesson = () => {
     socketRef.current.onmessage = (message) => {
       const data = JSON.parse(message.data);
       setPredictedSign(data.predicted_sign);
-      if (targetSign === data.predicted_sign) {
+      if (targetSign === data.predicted_sign && !isTargetSignPredicted) {
         setIsTargetSignPredicted(true);
+        if(!hasLessonCompleteSpoken.current){
+          speakText("Lesson Complete");
+          hasLessonCompleteSpoken.current=true;
+        }
       }
     };
 
@@ -73,6 +78,14 @@ const Lesson = () => {
     startWebcam();
   }, []);
 
+  const speakText = (text: string) => {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "en-US";
+    speech.rate = 1;
+    speech.volume = 1;
+    window.speechSynthesis.speak(speech);
+  };
+
   return (
     <div className="flex flex-col items-center max-lg gap-4">
       <div className="flex justify-between items-center ">
@@ -104,7 +117,9 @@ const Lesson = () => {
         </div>
       </div>
       <button
-        className={`${isTargetSignPredicted ? "bg-green-500" : "bg-red-500"} px-4 py-2 rounded-md text-white`}
+        className={`${
+          isTargetSignPredicted ? "bg-green-500" : "bg-red-500"
+        } px-4 py-2 rounded-md text-white`}
         disabled={!isTargetSignPredicted}
       >
         Continue
