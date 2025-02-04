@@ -160,19 +160,30 @@ const authController = async (req, res) => {
 const markLessonAsCompleted = async (req, res) => {
   try {
     const { lessonId } = req.body;
-    const user = await User.findById(req.params.userId);
+    const user = await userModel.findOne({ _id: req.body.userId });
 
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user)
+      return res.status(404).json({ success: false, error: "User not found" });
 
-    if (!user.completedLessons.includes(lessonId)) {
-      user.completedLessons.push(lessonId);
-      user.xp += 10; // Award XP only for the first completion
+    // Check if lesson is already marked as completed
+    const isAlreadyCompleted = user.completedLessons.some(
+      (lesson) => lesson.lesson === lessonId
+    );
+
+    if (!isAlreadyCompleted) {
+      user.completedLessons.push({ lesson: lessonId, completedAt: new Date() });
+      user.xp += 10; // Award XP for first-time completion
       await user.save();
     }
 
-    res.json({ message: "Lesson marked as completed", user });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.json({
+      success: true,
+      message: "Lesson marked as completed",
+      lessonId,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -184,8 +195,9 @@ const getUserProgress = async (req, res) => {
     );
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ completedLessons: user.completedLessons, xp: user.xp });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
   }
 };
 

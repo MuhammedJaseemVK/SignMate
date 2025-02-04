@@ -4,6 +4,7 @@ const {
   loginController,
   authController,
   getUserProgress,
+  markLessonAsCompleted,
 } = require("../controllers/userController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
@@ -12,7 +13,7 @@ const router = express.Router();
 router.post("/register", registerController);
 router.post("/login", loginController);
 router.get("/getUserData", authMiddleware, authController);
-router.post("/:userId/complete-lesson", authController, authController);
-router.get("/:userId/progress", authController, getUserProgress);
+router.post("/lesson/complete", authMiddleware, markLessonAsCompleted);
+router.get("/:userId/progress", authMiddleware, getUserProgress);
 
 module.exports = router;

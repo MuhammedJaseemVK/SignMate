@@ -1,4 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
+import { useParams } from "react-router";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { v4 as uuidv4 } from "uuid";
 
 const Lesson = () => {
@@ -9,9 +14,12 @@ const Lesson = () => {
   const socketRef = useRef(null);
   const hasLessonCompleteSpoken = useRef<boolean>(false);
   let frameInterval = null;
+  const { courseId, lessonId } = useParams();
+  const lessons = useSelector((state) => state.lessons.lessons[courseId] || []);
+  const navigate = useNavigate();
 
   const clientId = useRef(uuidv4()); // Generate a unique ID for each user
-  const targetSign = "A";
+  const targetSign = lessonId;
 
   useEffect(() => {
     // Setup WebSocket connection with unique client ID
@@ -23,11 +31,15 @@ const Lesson = () => {
     socketRef.current.onmessage = (message) => {
       const data = JSON.parse(message.data);
       setPredictedSign(data.predicted_sign);
-      if (targetSign === data.predicted_sign && !isTargetSignPredicted) {
+      if (
+        targetSign === data.predicted_sign.toLowerCase() &&
+        !isTargetSignPredicted
+      ) {
         setIsTargetSignPredicted(true);
-        if(!hasLessonCompleteSpoken.current){
+        if (!hasLessonCompleteSpoken.current) {
           speakText("Lesson Complete");
-          hasLessonCompleteSpoken.current=true;
+          hasLessonCompleteSpoken.current = true;
+          markLessonComplete();
         }
       }
     };
@@ -42,7 +54,7 @@ const Lesson = () => {
         clearInterval(frameInterval);
       }
     };
-  }, []);
+  }, [lessonId]);
 
   const sendFrameToServer = async () => {
     if (webcamRef.current && socketRef.current.readyState === WebSocket.OPEN) {
@@ -86,11 +98,44 @@ const Lesson = () => {
     window.speechSynthesis.speak(speech);
   };
 
+  const markLessonComplete = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `/api/v1/user/lesson/complete`,
+        { lessonId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.success) {
+        toast.success("Awarded 10XP for you!");
+      }
+    } catch (error) {
+      console.error("Error marking lesson complete:", error);
+    }
+
+    setTimeout(() => {
+      navigateToNextLesson();
+      setIsTargetSignPredicted(false);
+      hasLessonCompleteSpoken.current = false;
+    }, 3000);
+  };
+
+  const navigateToNextLesson = () => {
+    const currentIndex = lessons.findIndex(
+      (lesson) => lesson.id.toLowerCase() === lessonId
+    );
+    if (currentIndex !== -1 && currentIndex < lessons.length - 1) {
+      navigate(`/courses/${courseId}/lessons/${lessons[currentIndex + 1].id}`);
+    } else {
+      navigate(`/courses`);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center max-lg gap-4">
       <div className="flex justify-between items-center ">
         <img
-          src="https://lifeprint.com/asl101/fingerspelling/abc-gifs/a.gif"
+          src={`https://lifeprint.com/asl101/fingerspelling/abc-gifs/${lessonId}.gif`}
           width="480"
           alt=""
         />
@@ -116,14 +161,9 @@ const Lesson = () => {
           </h1>
         </div>
       </div>
-      <button
-        className={`${
-          isTargetSignPredicted ? "bg-green-500" : "bg-red-500"
-        } px-4 py-2 rounded-md text-white`}
-        disabled={!isTargetSignPredicted}
-      >
-        Continue
-      </button>
+      <h3 className="text-bold text-4xl ">
+        {isTargetSignPredicted ? "Moving to next question" : "Keep signing"}
+      </h3>
     </div>
   );
 };

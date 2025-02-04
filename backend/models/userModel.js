@@ -35,7 +35,12 @@ const userSchema = new mongoose.Schema(
       type:Boolean,
       default:false
     },
-    completedLessons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lesson" }],
+    completedLessons: [
+      {
+        lesson: { type: String, required: true },
+        completedAt: { type: Date, default: Date.now }
+      }
+    ],    
     xp: { type: Number, default: 0 },
   },
   { timestamps: true }
