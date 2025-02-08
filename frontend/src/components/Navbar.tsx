@@ -19,6 +19,7 @@ const Navbar = () => {
   const userMenu = [
     { name: "Home", path: "/" },
     { name: "Courses", path: "/courses" },
+    { name: "Quiz", path: "/quiz" },
     { name: "Dashboard", path: "/dashboard" },
     { name: "Leaderboard", path: "/leaderboard" },
   ];

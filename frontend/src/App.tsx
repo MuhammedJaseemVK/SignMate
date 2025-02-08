@@ -11,6 +11,7 @@ import Courses from "./pages/Courses";
 import Lessons from "./pages/Lessons";
 import Leaderboard from "./pages/Leaderboard";
 import Dashboard from "./pages/Dashboard";
+import Quiz from "./pages/Quiz";
 
 function App() {
   return (
@@ -80,6 +81,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+                        <Route
+              path="quiz"
+              element={
+                <ProtectedRoute>
+                  <Quiz />
                 </ProtectedRoute>
               }
             />
