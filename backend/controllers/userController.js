@@ -1,4 +1,6 @@
 const userModel = require("../models/userModel");
+const courseModel = require("../models/courseModel");
+const lessonModel = require("../models/lessonModel");
 const bcrypt = require("bcrypt");
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
@@ -101,6 +103,38 @@ const loginController = async (req, res) => {
         .send({ success: false, message: "Invalid email or password" });
     }
 
+    // streak logic
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (user.lastLoginedDay) {
+      const lastLoginedDay = new Date(user.lastLoginedDay);
+      lastLoginedDay.setHours(0, 0, 0, 0);
+
+      if (lastLoginedDay.getTime() === today.getTime()) {
+        console.log("User already logined today");
+      } else if (lastLoginedDay.getTime() == yesterday.getTime()) {
+        user.streak += 1;
+      } else {
+        user.streak = 1;
+      }
+    } else {
+      user.streak = 1;
+    }
+
+    user.lastLoginedDay = today;
+    await user.save();
+
+    const isAlreadyLoginedToday = user.lastLoginedDay === today;
+
+    if (!isAlreadyLoginedToday) {
+      user.lastLoginedDay = today;
+      user.streak = user.streak + 1;
+    }
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
@@ -159,27 +193,41 @@ const authController = async (req, res) => {
 
 const markLessonAsCompleted = async (req, res) => {
   try {
-    const { lessonId } = req.body;
-    const user = await userModel.findOne({ _id: req.body.userId });
+    const { userId, lessonId, courseId } = req.body;
 
+    if (!lessonId) {
+      return res
+        .status(404)
+        .json({ success: false, error: "LessonId not found" });
+    }
+
+    const user = await userModel.findById(userId);
     if (!user)
       return res.status(404).json({ success: false, error: "User not found" });
 
-    // Check if lesson is already marked as completed
+    // Check if lesson is already completed
     const isAlreadyCompleted = user.completedLessons.some(
-      (lesson) => lesson.lesson === lessonId
+      (lesson) => lesson.lesson.toString() === lessonId
     );
 
     if (!isAlreadyCompleted) {
-      user.completedLessons.push({ lesson: lessonId, completedAt: new Date() });
+      user.completedLessons.push({
+        lessonId,
+        courseId,
+        completedAt: new Date(),
+      });
       user.xp += 10; // Award XP for first-time completion
       await user.save();
     }
 
+    // Remove sensitive data before sending response
+    const userWithoutPassword = user.toObject();
+    delete userWithoutPassword.password;
+
     return res.json({
       success: true,
       message: "Lesson marked as completed",
-      lessonId,
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.error(error);
@@ -187,17 +235,86 @@ const markLessonAsCompleted = async (req, res) => {
   }
 };
 
-// Get user progress (completed lessons & XP)
+// Get user progress (completed lessons, courses progress & XP)
 const getUserProgress = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId).populate(
-      "completedLessons"
+    const user = await userModel
+      .findById(req.body.userId)
+      .populate("completedLessons");
+
+    if (!user)
+      return res.status(404).json({ success: false, error: "User not found" });
+
+    // Calculate progress for each course
+    const courseProgress = await Promise.all(
+      user.completedLessons.map(async (completedLesson) => {
+        console.log("Completed Lesson:", completedLesson); // Debugging log
+        console.log("Course ID in Completed Lesson:", completedLesson.courseId); // Debugging log
+
+        // Fetch course using the courseId from completedLesson
+        const course = await courseModel.findOne({
+          id: completedLesson.courseId,
+        });
+
+        // Log the course object to verify
+        console.log("Course from DB:", course); // Debugging log
+
+        if (!course) {
+          return {
+            courseId: completedLesson.courseId,
+            courseTitle: "Course not found",
+            progress: 0,
+          };
+        }
+
+        const totalLessons = await lessonModel
+          .find({ courseId: completedLesson.courseId })
+          .countDocuments();
+        const completedLessonsCount = user.completedLessons.filter(
+          (lesson) => lesson.courseId === completedLesson.courseId
+        ).length;
+        const progress = Math.floor(
+          (completedLessonsCount / totalLessons) * 100
+        ); // Calculate progress percentage
+
+        return {
+          courseId: course.id,
+          courseTitle: course.title,
+          progress,
+        };
+      })
     );
-    if (!user) return res.status(404).json({ error: "User not found" });
-    res.json({ completedLessons: user.completedLessons, xp: user.xp });
+
+    res.json({
+      success: true,
+      data: {
+        coursesProgress: courseProgress,
+        xp: user.xp,
+        streak: user.streak,
+        completedLessons: user.completedLessons,
+      },
+    });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const getUsersByXP = async (req, res) => {
+  try {
+    const users = await userModel.find({}, "name xp streak").sort({ xp: -1 });
+
+    const leaderBoard = users.map((user, index) => ({
+      rank: index + 1,
+      name: user.name,
+      xp: user.xp,
+      streak: user.streak,
+    }));
+
+    return res.json({ success: true, data: leaderBoard });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -207,4 +324,5 @@ module.exports = {
   authController,
   markLessonAsCompleted,
   getUserProgress,
+  getUsersByXP,
 };

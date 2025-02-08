@@ -9,6 +9,7 @@ import Lesson from "./pages/Lesson";
 import ProtectedRoute from "./components/ProtectedRoutes";
 import Courses from "./pages/Courses";
 import Lessons from "./pages/Lessons";
+import Leaderboard from "./pages/Leaderboard";
 
 function App() {
   return (
@@ -57,14 +58,22 @@ function App() {
                 </ProtectedRoute>
               }
             />
-              <Route
-                path="courses/:courseId/lessons/:lessonId"
-                element={
-                  <ProtectedRoute>
-                    <Lesson />
-                  </ProtectedRoute>
-                }
-              />
+            <Route
+              path="courses/:courseId/lessons/:lessonId"
+              element={
+                <ProtectedRoute>
+                  <Lesson />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="leaderboard"
+              element={
+                <ProtectedRoute>
+                  <Leaderboard />
+                </ProtectedRoute>
+              }
+            />
           </Route>
         </Routes>
       </BrowserRouter>

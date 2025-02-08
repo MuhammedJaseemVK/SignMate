@@ -31,17 +31,20 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "parent"],
       default: "user",
     },
-    isAdmin:{
-      type:Boolean,
-      default:false
+    isAdmin: {
+      type: Boolean,
+      default: false,
     },
     completedLessons: [
       {
-        lesson: { type: String, required: true },
-        completedAt: { type: Date, default: Date.now }
-      }
+        lessonId: { type: String, required: true },
+        courseId: { type: String, required: true }, // Add courseId
+        completedAt: { type: Date, default: Date.now },
+      },
     ],    
     xp: { type: Number, default: 0 },
+    streak: { type: Number, default: 1 },
+    lastLoginedDay: { type: Date, default: null },
   },
   { timestamps: true }
 );

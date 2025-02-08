@@ -1,10 +1,11 @@
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { v4 as uuidv4 } from "uuid";
+import { setUser } from "../redux/features/userSlice";
 
 const Lesson = () => {
   const [predictedSign, setPredictedSign] = useState<string>("");
@@ -16,7 +17,10 @@ const Lesson = () => {
   let frameInterval = null;
   const { courseId, lessonId } = useParams();
   const lessons = useSelector((state) => state.lessons.lessons[courseId] || []);
+  const lessonIndex = lessons.findIndex((lesson) => lesson.id === lessonId);
+  const lesson = lessons[lessonIndex];
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const clientId = useRef(uuidv4()); // Generate a unique ID for each user
   const targetSign = lessonId;
@@ -103,11 +107,13 @@ const Lesson = () => {
       const token = localStorage.getItem("token");
       const res = await axios.post(
         `/api/v1/user/lesson/complete`,
-        { lessonId },
+        { lessonId, courseId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.data.success) {
         toast.success("Awarded 10XP for you!");
+        const { user } = res.data;
+        dispatch(setUser(user));
       }
     } catch (error) {
       console.error("Error marking lesson complete:", error);
@@ -133,12 +139,9 @@ const Lesson = () => {
 
   return (
     <div className="flex flex-col items-center max-lg gap-4">
+      <h2 className="text-xl font-semibold mt-4">{lesson.title}</h2>
       <div className="flex justify-between items-center ">
-        <img
-          src={`https://lifeprint.com/asl101/fingerspelling/abc-gifs/${lessonId}.gif`}
-          width="480"
-          alt=""
-        />
+        <img src={lesson.image} width="480" alt="" />
         <div style={{ position: "relative", textAlign: "center" }}>
           <video
             ref={webcamRef}

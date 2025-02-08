@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import CourseCard from "../components/CourseCard";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,6 +15,7 @@ type Course ={
 
 const Courses = (props: Props) => {
   const {courses} = useSelector(state=>state.courses);
+  const [coursesProgress, setCoursesProgress] = useState<{ [key: string]: number }>({});
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -37,7 +38,27 @@ const Courses = (props: Props) => {
       }
     };
 
+    const getCoursesProgress = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('/api/v1/user/progress', {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.data.success) {
+          const coursesProgressData = res.data.data.coursesProgress;
+          const progressMap = coursesProgressData.reduce((acc: { [key: string]: number }, course: any) => {
+            acc[course.courseId] = course.progress;
+            return acc;
+          }, {});
+          setCoursesProgress(progressMap);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     getCourses();
+    getCoursesProgress();
   }, []);
   return (
     <div className="">
@@ -51,7 +72,7 @@ const Courses = (props: Props) => {
             id={course.id}
             title={course.title}
             description={course.description}
-            progress={course.progress}
+            progress={coursesProgress[course.id] || 0}
           />
         ))}
       </div>
