@@ -103,38 +103,6 @@ const loginController = async (req, res) => {
         .send({ success: false, message: "Invalid email or password" });
     }
 
-    // streak logic
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (user.lastLoginedDay) {
-      const lastLoginedDay = new Date(user.lastLoginedDay);
-      lastLoginedDay.setHours(0, 0, 0, 0);
-
-      if (lastLoginedDay.getTime() === today.getTime()) {
-        console.log("User already logined today");
-      } else if (lastLoginedDay.getTime() == yesterday.getTime()) {
-        user.streak += 1;
-      } else {
-        user.streak = 1;
-      }
-    } else {
-      user.streak = 1;
-    }
-
-    user.lastLoginedDay = today;
-    await user.save();
-
-    const isAlreadyLoginedToday = user.lastLoginedDay === today;
-
-    if (!isAlreadyLoginedToday) {
-      user.lastLoginedDay = today;
-      user.streak = user.streak + 1;
-    }
-
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
@@ -158,33 +126,60 @@ const authController = async (req, res) => {
         "any.required": "userId is required.",
       }),
   });
+
   try {
     const { error } = authSchema.validate(req.body);
     if (error) {
-      return res.status(400).send({
+      return res.status(400).json({
         success: false,
         message: error.details[0].message,
       });
     }
 
-    // Find the user in the database
-    const user = await userModel.findOne({ _id: req.body.userId });
-
+    const user = await userModel.findById(req.body.userId);
     if (!user) {
-      return res.status(404).send({
+      return res.status(404).json({
         success: false,
         message: "User not found.",
       });
     }
 
-    user.password = undefined; // Exclude password from the response
-    return res.status(200).send({
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Streak logic
+    if (!user.lastLoginedDay) {
+      user.streak = 1; // First-time login
+    } else {
+      const lastLoginedDay = new Date(user.lastLoginedDay);
+      lastLoginedDay.setHours(0, 0, 0, 0);
+
+      if (lastLoginedDay.getTime() === today.getTime()) {
+        console.log("User already logged in today");
+      } else if (lastLoginedDay.getTime() === yesterday.getTime()) {
+        user.streak += 1; // Continue streak
+      } else {
+        user.streak = 1; // Reset streak
+      }
+    }
+
+    user.lastLoginedDay = today;
+
+    await user.save();
+
+    user.password = undefined;
+
+    return res.status(200).json({
       success: true,
       data: user,
     });
+
   } catch (error) {
     console.error(error);
-    res.status(500).send({
+    return res.status(500).json({
       success: false,
       message: "Auth error.",
     });
@@ -248,16 +243,9 @@ const getUserProgress = async (req, res) => {
     // Calculate progress for each course
     const courseProgress = await Promise.all(
       user.completedLessons.map(async (completedLesson) => {
-        console.log("Completed Lesson:", completedLesson); // Debugging log
-        console.log("Course ID in Completed Lesson:", completedLesson.courseId); // Debugging log
-
-        // Fetch course using the courseId from completedLesson
         const course = await courseModel.findOne({
           id: completedLesson.courseId,
         });
-
-        // Log the course object to verify
-        console.log("Course from DB:", course); // Debugging log
 
         if (!course) {
           return {
@@ -275,7 +263,7 @@ const getUserProgress = async (req, res) => {
         ).length;
         const progress = Math.floor(
           (completedLessonsCount / totalLessons) * 100
-        ); // Calculate progress percentage
+        );
 
         return {
           courseId: course.id,

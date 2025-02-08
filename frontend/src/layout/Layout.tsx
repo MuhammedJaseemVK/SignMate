@@ -3,9 +3,9 @@ import Navbar from "../components/Navbar";
 
 export default function Layout() {
   return (
-    <div className="w-full">
+    <div className="w-full min-h-screen">
       <Navbar />
-      <div className="flex w-full justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center m-5">
         <Outlet />
       </div>
     </div>

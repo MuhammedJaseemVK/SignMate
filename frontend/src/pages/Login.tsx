@@ -46,7 +46,7 @@ const Login = (props: Props) => {
       if (res.data.success) {
         localStorage.setItem("token", res.data.token);
         toast.success("Login successfully");
-        navigate("/");
+        navigate("/dashboard");
       } else {
         toast.error(res.data.message || "Invalid email or password");
       }

@@ -2,7 +2,6 @@ const userModel = require('../models/userModel');
 
 module.exports = async (req, res, next) => {
   try {
-    console.log(req.body.userId)
     const user = await userModel.findOne({ _id: req.body.userId });
     if (!user) {
       return res

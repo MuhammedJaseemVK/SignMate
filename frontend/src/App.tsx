@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoutes";
 import Courses from "./pages/Courses";
 import Lessons from "./pages/Lessons";
 import Leaderboard from "./pages/Leaderboard";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
@@ -71,6 +72,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Leaderboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />
