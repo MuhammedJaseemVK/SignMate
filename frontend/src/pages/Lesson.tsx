@@ -11,10 +11,9 @@ const Lesson = () => {
   const [predictedSign, setPredictedSign] = useState<string>("");
   const [isTargetSignPredicted, setIsTargetSignPredicted] =
     useState<boolean>(false);
-  const webcamRef = useRef(null);
-  const socketRef = useRef(null);
+  const webcamRef = useRef<HTMLVideoElement | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
   const hasLessonCompleteSpoken = useRef<boolean>(false);
-  let frameInterval = null;
   const { courseId, lessonId } = useParams();
   const lessons = useSelector((state) => state.lessons.lessons[courseId] || []);
   const lessonIndex = lessons.findIndex((lesson) => lesson.id === lessonId);
@@ -26,12 +25,16 @@ const Lesson = () => {
   const targetSign = lessonId;
 
   useEffect(() => {
-    // Setup WebSocket connection with unique client ID
+    let localStream: MediaStream | null = null;
+    let frameIntervalId: NodeJS.Timeout | null = null;
+
+    // Setup WebSocket connection
     socketRef.current = new WebSocket(
       `ws://localhost:8000/ws/${clientId.current}`
     );
 
     socketRef.current.onopen = () => console.log("WebSocket connected");
+
     socketRef.current.onmessage = (message) => {
       const data = JSON.parse(message.data);
       setPredictedSign(data.predicted_sign);
@@ -50,21 +53,57 @@ const Lesson = () => {
 
     socketRef.current.onclose = () => console.log("WebSocket disconnected");
 
+    // Start the webcam and send frames
+    const startWebcam = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        localStream = stream;
+        if (webcamRef.current) {
+          webcamRef.current.srcObject = stream;
+        }
+
+        // Send frames every 300ms
+        frameIntervalId = setInterval(sendFrameToServer, 300);
+      } catch (error) {
+        console.error("Error accessing webcam:", error);
+      }
+    };
+
+    startWebcam();
+
     return () => {
+      // Cleanup WebSocket
       if (socketRef.current) {
         socketRef.current.close();
       }
-      if (frameInterval) {
-        clearInterval(frameInterval);
+
+      // Stop sending frames
+      if (frameIntervalId) {
+        clearInterval(frameIntervalId);
+      }
+
+      // Stop webcam stream
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+      }
+
+      if (webcamRef.current) {
+        webcamRef.current.srcObject = null;
       }
     };
-  }, [lessonId]);
+  }, [lessonId]); // Runs when lessonId changes
 
   const sendFrameToServer = async () => {
-    if (webcamRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+    if (
+      webcamRef.current &&
+      socketRef.current &&
+      socketRef.current.readyState === WebSocket.OPEN
+    ) {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       const video = webcamRef.current;
+
+      if (!ctx || !video.videoWidth || !video.videoHeight) return;
 
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -72,27 +111,17 @@ const Lesson = () => {
 
       canvas.toBlob(
         (blob) => {
-          blob.arrayBuffer().then((buffer) => {
-            socketRef.current.send(buffer);
-          });
+          if (blob) {
+            blob.arrayBuffer().then((buffer) => {
+              socketRef.current?.send(buffer);
+            });
+          }
         },
         "image/jpeg",
         0.6
       ); // Compress image for faster transmission
     }
   };
-
-  const startWebcam = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    webcamRef.current.srcObject = stream;
-
-    // Send frames every 300ms for real-time performance
-    frameInterval = setInterval(sendFrameToServer, 300);
-  };
-
-  useEffect(() => {
-    startWebcam();
-  }, []);
 
   const speakText = (text: string) => {
     const speech = new SpeechSynthesisUtterance(text);
@@ -149,6 +178,11 @@ const Lesson = () => {
             playsInline
             width="640"
             height="480"
+            className={`rounded-md transition-all duration-300 ${
+              isTargetSignPredicted
+                ? "border-4 border-green-500"
+                : "border-none"
+            }`}
           />
           <h1
             style={{
