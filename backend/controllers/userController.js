@@ -188,7 +188,7 @@ const authController = async (req, res) => {
 
 const markLessonAsCompleted = async (req, res) => {
   try {
-    const { userId, lessonId, courseId } = req.body;
+    const { userId, lessonId, courseId, image } = req.body;
 
     if (!lessonId) {
       return res.status(404).json({ success: false, error: "LessonId not found" });
@@ -200,23 +200,41 @@ const markLessonAsCompleted = async (req, res) => {
     }
 
     // Check if lesson is already completed
-    const isAlreadyCompleted = user.completedLessons.some(
+    const existingLesson = user.completedLessons.find(
       (lesson) => lesson.lessonId.toString() === lessonId
     );
 
-    if (isAlreadyCompleted) {
+    if (existingLesson) {
       return res.json({
         success: false,
         message: "Lesson was already completed",
       });
     }
 
-    // Mark lesson as completed
+    // Calculate the next review date based on the spaced repetition system
+    const nextReviewDate = new Date();
+    nextReviewDate.setDate(nextReviewDate.getDate() + 1); // Start with a 1-day review interval
+
+    // Create revision data for first-time completion
+    const revisionData = {
+      difficulty: "easy",
+      nextReviewDate: nextReviewDate.toISOString(), // Ensure it's correctly set here
+      interval: 1, // Initially set interval to 1 day for "easy"
+      repetitions: 0, // Initially set repetitions to 0
+    };
+
+    // Mark lesson as completed with revision details and nextReviewDate
     user.completedLessons.push({
       lessonId,
       courseId,
+      image,
       completedAt: new Date(),
+      easeFactor: 2.5, // Optional: add initial easeFactor value
+      interval: 1, // Start with a 1-day interval
+      repetitions: 0, // Start with 0 repetitions
+      nextReviewDate: nextReviewDate, // Ensure nextReviewDate is included here
     });
+
     user.xp += 10; // Award XP for first-time completion
     await user.save();
 
@@ -226,7 +244,7 @@ const markLessonAsCompleted = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Lesson marked as completed",
+      message: "Lesson marked as completed and revision scheduled",
       user: userWithoutPassword,
     });
   } catch (error) {

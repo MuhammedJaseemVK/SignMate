@@ -1,6 +1,17 @@
 const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema(
+const CompletedLessonSchema = new mongoose.Schema({
+  lessonId: { type: String, required: true },
+  courseId: { type: String, required: true },
+  completedAt: { type: Date, default: Date.now },
+  easeFactor: { type: Number, default: 2.5 }, // Ease factor for spaced repetition
+  interval: { type: Number, default: 1 }, // Interval in days
+  repetitions: { type: Number, default: 0 }, // Count of repetitions
+  nextReviewDate: { type: Date, required: true }, // Next review date
+  image: { type: String, required: true },
+});
+
+const UserSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -35,13 +46,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    completedLessons: [
-      {
-        lessonId: { type: String, required: true },
-        courseId: { type: String, required: true }, // Add courseId
-        completedAt: { type: Date, default: Date.now },
-      },
-    ],    
+    completedLessons: [CompletedLessonSchema], // Stores lesson completion & spaced repetition data
     xp: { type: Number, default: 0 },
     streak: { type: Number, default: 1 },
     lastLoginedDay: { type: Date, default: null },
@@ -49,6 +54,6 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const userModel = mongoose.model("users", userSchema);
+const userModel = mongoose.model("users", UserSchema);
 
 module.exports = userModel;

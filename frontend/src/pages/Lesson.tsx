@@ -56,7 +56,9 @@ const Lesson = () => {
     // Start the webcam and send frames
     const startWebcam = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
         localStream = stream;
         if (webcamRef.current) {
           webcamRef.current.srcObject = stream;
@@ -136,7 +138,7 @@ const Lesson = () => {
       const token = localStorage.getItem("token");
       const res = await axios.post(
         `/api/v1/user/lesson/complete`,
-        { lessonId, courseId },
+        { lessonId, courseId, image: lesson.image },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.data.success) {

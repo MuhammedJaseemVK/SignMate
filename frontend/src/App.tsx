@@ -12,6 +12,8 @@ import Lessons from "./pages/Lessons";
 import Leaderboard from "./pages/Leaderboard";
 import Dashboard from "./pages/Dashboard";
 import Quiz from "./pages/Quiz";
+import CalendarPage from "./pages/CalendarPage";
+import DailyRevisions from "./pages/DailyRevisions";
 
 function App() {
   return (
@@ -84,11 +86,27 @@ function App() {
                 </ProtectedRoute>
               }
             />
-                        <Route
+            <Route
               path="quiz"
               element={
                 <ProtectedRoute>
                   <Quiz />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="revisions"
+              element={
+                <ProtectedRoute>
+                  <CalendarPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="revisions/today"
+              element={
+                <ProtectedRoute>
+                  <DailyRevisions />
                 </ProtectedRoute>
               }
             />

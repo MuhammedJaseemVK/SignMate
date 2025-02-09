@@ -5,7 +5,7 @@ const {
   authController,
   getUserProgress,
   markLessonAsCompleted,
-  getUsersByXP
+  getUsersByXP,
 } = require("../controllers/userController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
@@ -16,6 +16,6 @@ router.post("/login", loginController);
 router.get("/getUserData", authMiddleware, authController);
 router.post("/lesson/complete", authMiddleware, markLessonAsCompleted);
 router.get("/progress", authMiddleware, getUserProgress);
-router.get('/leaderboard', authMiddleware, getUsersByXP);
+router.get("/leaderboard", authMiddleware, getUsersByXP);
 
 module.exports = router;
