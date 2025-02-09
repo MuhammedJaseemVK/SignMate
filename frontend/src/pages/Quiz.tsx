@@ -10,9 +10,13 @@ const Quiz = () => {
   const webcamRef = useRef<HTMLVideoElement | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const hasLessonCompleteSpoken = useRef<boolean>(false);
-  const {user} = useSelector((state)=>state.user)
-  const lessonsAvailableForQuiz = user.completedLessons.map((lesson)=>lesson.lessonId);
+  const { user } = useSelector((state) => state.user);
+  const lessonsAvailableForQuiz = user.completedLessons.map(
+    (lesson) => lesson.lessonId
+  );
   const [quizindex, setQuizindex] = useState<number>(0);
+  const progress = (quizindex / lessonsAvailableForQuiz.length) * 100;
+  const quizNumber = `${quizindex + 1} / ${lessonsAvailableForQuiz.length}`;
 
   const navigate = useNavigate();
 
@@ -51,7 +55,9 @@ const Quiz = () => {
     // Start the webcam and send frames
     const startWebcam = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
         localStream = stream;
         if (webcamRef.current) {
           webcamRef.current.srcObject = stream;
@@ -152,18 +158,19 @@ const Quiz = () => {
 
   const navigateToNextQuiz = () => {
     const avaiableQuizLength = lessonsAvailableForQuiz.length;
-    const currentIndex = quizindex +1 ;
-    if(currentIndex >avaiableQuizLength-1){
-        navigate('/dashboard')
-    }
-    else{
-        setQuizindex(currentIndex);
+    const currentIndex = quizindex + 1;
+    if (currentIndex > avaiableQuizLength - 1) {
+      navigate("/dashboard");
+    } else {
+      setQuizindex(currentIndex);
     }
   };
 
   return (
     <div className="flex flex-col items-center max-lg gap-4">
-      <h2 className="text-xl font-semibold mt-4">Sign - {targetSign.toUpperCase()}</h2>
+      <h2 className="text-xl font-semibold mt-4">
+        Sign - {targetSign.toUpperCase()}
+      </h2>
       <div className="flex justify-between items-center ">
         <div style={{ position: "relative", textAlign: "center" }}>
           <video
@@ -195,6 +202,24 @@ const Quiz = () => {
       <h3 className="text-bold text-4xl ">
         {isTargetSignPredicted ? "Moving to next question" : "Keep signing"}
       </h3>
+      <div className="flex w-full gap-2 items-center">
+        <div className="flex justify-between mb-1">
+          <span className="text-sm text-blue-700 dark:text-black font-bold">
+            {progress}%
+          </span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+          <div
+            className="bg-blue-600 h-2.5 rounded-full"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between mb-1">
+          <span className="text-sm text-blue-700 dark:text-black font-bold whitespace-nowrap min-w-fit">
+            {quizNumber}
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
