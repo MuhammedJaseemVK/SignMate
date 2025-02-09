@@ -191,29 +191,34 @@ const markLessonAsCompleted = async (req, res) => {
     const { userId, lessonId, courseId } = req.body;
 
     if (!lessonId) {
-      return res
-        .status(404)
-        .json({ success: false, error: "LessonId not found" });
+      return res.status(404).json({ success: false, error: "LessonId not found" });
     }
 
     const user = await userModel.findById(userId);
-    if (!user)
+    if (!user) {
       return res.status(404).json({ success: false, error: "User not found" });
+    }
 
     // Check if lesson is already completed
     const isAlreadyCompleted = user.completedLessons.some(
-      (lesson) => lesson.lesson.toString() === lessonId
+      (lesson) => lesson.lessonId.toString() === lessonId
     );
 
-    if (!isAlreadyCompleted) {
-      user.completedLessons.push({
-        lessonId,
-        courseId,
-        completedAt: new Date(),
+    if (isAlreadyCompleted) {
+      return res.json({
+        success: false,
+        message: "Lesson was already completed",
       });
-      user.xp += 10; // Award XP for first-time completion
-      await user.save();
     }
+
+    // Mark lesson as completed
+    user.completedLessons.push({
+      lessonId,
+      courseId,
+      completedAt: new Date(),
+    });
+    user.xp += 10; // Award XP for first-time completion
+    await user.save();
 
     // Remove sensitive data before sending response
     const userWithoutPassword = user.toObject();
