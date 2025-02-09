@@ -176,7 +176,6 @@ const authController = async (req, res) => {
       success: true,
       data: user,
     });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -191,7 +190,9 @@ const markLessonAsCompleted = async (req, res) => {
     const { userId, lessonId, courseId, image } = req.body;
 
     if (!lessonId) {
-      return res.status(404).json({ success: false, error: "LessonId not found" });
+      return res
+        .status(404)
+        .json({ success: false, error: "LessonId not found" });
     }
 
     const user = await userModel.findById(userId);
@@ -329,6 +330,30 @@ const getUsersByXP = async (req, res) => {
   }
 };
 
+const awardXPController = async (req, res) => {
+  const { xpPoints, userId } = req.body;
+
+  if (!xpPoints || xpPoints <= 0) {
+    return res.status(400).json({ message: "Invalid XP points" });
+  }
+
+  try {
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user's XP
+    user.xp += xpPoints;
+    await user.save();
+
+    return res.status(200).json({ success: true, xp: user.xp });
+  } catch (error) {
+    console.error("Error awarding XP:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
@@ -336,4 +361,5 @@ module.exports = {
   markLessonAsCompleted,
   getUserProgress,
   getUsersByXP,
+  awardXPController,
 };

@@ -1,7 +1,10 @@
+import axios from "axios";
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import { setUser } from "../redux/features/userSlice";
+import { toast } from "react-toastify";
 
 const Quiz = () => {
   const [predictedSign, setPredictedSign] = useState<string>("");
@@ -21,6 +24,7 @@ const Quiz = () => {
   const quizNumber = `${quizindex + 1} / ${lessonsAvailableForQuiz.length}`;
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const clientId = useRef(uuidv4()); // Generate a unique ID for each user
   const targetSign = lessonsAvailableForQuiz[quizindex].sign;
@@ -48,7 +52,7 @@ const Quiz = () => {
         if (!hasLessonCompleteSpoken.current) {
           speakText("Right answer");
           hasLessonCompleteSpoken.current = true;
-          markLessonComplete();
+          awardXP();
         }
       }
     };
@@ -139,22 +143,24 @@ const Quiz = () => {
     window.speechSynthesis.speak(speech);
   };
 
-  const completeQuiz = async () => {
-    // try {
-    //   const token = localStorage.getItem("token");
-    //   const res = await axios.post(
-    //     `/api/v1/user/lesson/complete`,
-    //     { lessonId, courseId },
-    //     { headers: { Authorization: `Bearer ${token}` } }
-    //   );
-    //   if (res.data.success) {
-    //     toast.success("Awarded 10XP for you!");
-    //     const { user } = res.data;
-    //     dispatch(setUser(user));
-    //   }
-    // } catch (error) {
-    //   console.error("Error marking lesson complete:", error);
-    // }
+  const awardXP = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        "/api/v1/user/award-xp",
+        { xpPoints: 10 },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.success) {
+        console.log("XP awarded successfully");
+        toast.success("Awarded 10XP for you!");
+        dispatch(setUser(res.data.user));
+      } else {
+        console.log("Failed to award XP");
+      }
+    } catch (error) {
+      console.error("Error awarding XP:", error);
+    }
 
     setTimeout(() => {
       navigateToNextQuiz();
