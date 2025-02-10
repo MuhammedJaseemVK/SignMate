@@ -11,34 +11,25 @@ const Quiz = () => {
   const [predictedSign, setPredictedSign] = useState<string>("");
   const [isTargetSignPredicted, setIsTargetSignPredicted] =
     useState<boolean>(false);
-  const [showImage, setShowImage] = useState(false); // State to track if image should be shown
+  const [showImage, setShowImage] = useState(false);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [currentLetterIndex, setCurrentLetterIndex] = useState(0);
+  const wordsForQuiz = ["CAT", "DOG", "BAT"];
+  const currentWord = wordsForQuiz[currentWordIndex];
+
   const webcamRef = useRef<HTMLVideoElement | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const hasLessonCompleteSpoken = useRef<boolean>(false);
   const { user } = useSelector((state) => state.user);
-  const lessonsAvailable = user.completedLessons.map((lesson) => ({
-    sign: lesson.lessonId,
-    image: lesson.image,
-  }));
-  const lessonsAvailableForQuiz = shuffleArray(lessonsAvailable);
-  const [quizindex, setQuizindex] = useState<number>(0);
-  const progress = Math.round(
-    (quizindex + 1 / lessonsAvailableForQuiz.length) * 100
-  );
-  const quizNumber = `${quizindex + 1} / ${lessonsAvailableForQuiz.length}`;
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const clientId = useRef(uuidv4()); // Generate a unique ID for each user
-  const targetSign = lessonsAvailableForQuiz[quizindex].sign;
-  const targetSignImage = lessonsAvailableForQuiz[quizindex].image;
+  const clientId = useRef(uuidv4());
 
   useEffect(() => {
     let localStream: MediaStream | null = null;
     let frameIntervalId: NodeJS.Timeout | null = null;
 
-    // Setup WebSocket connection
     socketRef.current = new WebSocket(
       `ws://localhost:8000/ws/${clientId.current}`
     );
@@ -48,22 +39,23 @@ const Quiz = () => {
     socketRef.current.onmessage = (message) => {
       const data = JSON.parse(message.data);
       setPredictedSign(data.predicted_sign);
+
       if (
-        targetSign === data.predicted_sign.toLowerCase() &&
-        !isTargetSignPredicted
+        currentWord[currentLetterIndex] === data.predicted_sign.toUpperCase()
       ) {
-        setIsTargetSignPredicted(true);
-        if (!hasLessonCompleteSpoken.current) {
-          speakText("Right answer");
-          hasLessonCompleteSpoken.current = true;
-          awardXP();
+        setCurrentLetterIndex((prevIndex) => prevIndex + 1);
+        if (currentLetterIndex + 1 === currentWord.length) {
+          toast.success(`Successfully signed ${currentWord}!`);
+          setTimeout(() => {
+            setCurrentLetterIndex(0);
+            setCurrentWordIndex((prevIndex) => (prevIndex + 1) % wordsForQuiz.length);
+          }, 2000);
         }
       }
     };
 
     socketRef.current.onclose = () => console.log("WebSocket disconnected");
 
-    // Start the webcam and send frames
     const startWebcam = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -74,7 +66,6 @@ const Quiz = () => {
           webcamRef.current.srcObject = stream;
         }
 
-        // Send frames every 300ms
         frameIntervalId = setInterval(sendFrameToServer, 300);
       } catch (error) {
         console.error("Error accessing webcam:", error);
@@ -84,26 +75,20 @@ const Quiz = () => {
     startWebcam();
 
     return () => {
-      // Cleanup WebSocket
       if (socketRef.current) {
         socketRef.current.close();
       }
-
-      // Stop sending frames
       if (frameIntervalId) {
         clearInterval(frameIntervalId);
       }
-
-      // Stop webcam stream
       if (localStream) {
         localStream.getTracks().forEach((track) => track.stop());
       }
-
       if (webcamRef.current) {
         webcamRef.current.srcObject = null;
       }
     };
-  }, []);
+  }, [currentLetterIndex, currentWord]);
 
   const sendFrameToServer = async () => {
     if (
@@ -131,122 +116,34 @@ const Quiz = () => {
         },
         "image/jpeg",
         0.6
-      ); // Compress image for faster transmission
-    }
-  };
-
-  const toggleImageVisibility = () => {
-    setShowImage((prev) => !prev); // Toggle the image visibility
-  };
-
-  const speakText = (text: string) => {
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.lang = "en-US";
-    speech.rate = 1;
-    speech.volume = 1;
-    window.speechSynthesis.speak(speech);
-  };
-
-  const awardXP = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "/api/v1/user/award-xp",
-        { xpPoints: 10 },
-        { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (res.data.success) {
-        console.log("XP awarded successfully");
-        toast.success("Awarded 10XP for you!");
-        dispatch(setUser(res.data.user));
-      } else {
-        console.log("Failed to award XP");
-      }
-    } catch (error) {
-      console.error("Error awarding XP:", error);
-    }
-
-    setTimeout(() => {
-      navigateToNextQuiz();
-      setIsTargetSignPredicted(false);
-      hasLessonCompleteSpoken.current = false;
-    }, 3000);
-  };
-
-  const navigateToNextQuiz = () => {
-    const avaiableQuizLength = lessonsAvailableForQuiz.length;
-    const currentIndex = quizindex + 1;
-    if (currentIndex > avaiableQuizLength - 1) {
-      navigate("/dashboard");
-    } else {
-      setQuizindex(currentIndex);
     }
   };
 
   return (
-    <div className="flex flex-col items-center max-lg gap-4 h-full">
-      <h2 className="text-4xl font-extrabold dark:text-white">
-        Sign - {targetSign.toUpperCase()}
-      </h2>
-      <div className="flex justify-between items-center ">
-        {/* Conditionally render the image based on showImage state */}
-        {showImage && <img src={targetSignImage} className="rounded-md" width="480" alt="" />}
-        <div style={{ position: "relative", textAlign: "center" }}>
-          <video
-            ref={webcamRef}
-            autoPlay
-            playsInline
-            width="640"
-            height="480"
-            className={`rounded-md transition-all duration-300 ${
-              isTargetSignPredicted
-                ? "border-4 border-green-500"
-                : "border-none"
+    <div className="flex flex-col items-center gap-4 h-full">
+      <h2 className="text-4xl font-extrabold dark:text-white">Spell the Word</h2>
+      <div className="flex gap-2">
+        {currentWord.split("").map((letter, index) => (
+          <span
+            key={index}
+            className={`text-3xl font-bold p-2 rounded-md ${
+              index < currentLetterIndex ? "text-green-500" : "text-gray-500"
             }`}
-          />
-          <h1
-            style={{
-              position: "absolute",
-              top: "10%",
-              left: "50%",
-              transform: "translateX(-50%)",
-              color: "white",
-              fontSize: "24px",
-            }}
           >
-            Predicted Sign: {predictedSign}
-          </h1>
-        </div>
-      </div>
-      <h3 className="text-bold text-4xl ">
-        {isTargetSignPredicted ? "Moving to next question" : "Keep signing"}
-      </h3>
-      {/* Help button to show the image */}
-      <button
-        className="w-md text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        onClick={toggleImageVisibility}
-      >
-        {showImage ? "Hide Image" : "Need help"}
-      </button>
-
-      <div className="flex w-[640px] gap-2 items-center">
-        <div className="flex justify-between mb-1">
-          <span className="text-sm text-blue-700 dark:text-white font-bold">
-            {progress}%
+            {letter}
           </span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 ">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full"
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-        <div className="flex justify-between mb-1">
-          <span className="text-sm text-blue-700 dark:text-white font-bold whitespace-nowrap min-w-fit">
-            {quizNumber}
-          </span>
-        </div>
+        ))}
       </div>
+      <h3 className="text-bold text-4xl">Predicted Sign: {predictedSign}</h3>
+      <video
+        ref={webcamRef}
+        autoPlay
+        playsInline
+        width="640"
+        height="480"
+        className="rounded-md border-2 border-gray-300"
+      />
     </div>
   );
 };
