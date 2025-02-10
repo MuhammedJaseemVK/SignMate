@@ -13,6 +13,8 @@ const Navbar = () => {
   const [isMobileMenuDropdownVisible, setIsMobileMenuDropdownVisible] =
     useState(false);
   const { user } = useSelector((state) => state.user);
+  const xp = user?.xp || 0;
+  const streak = user?.streak || 0;  
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -69,7 +71,7 @@ const Navbar = () => {
   }, [user]);
 
   return (
-    <nav className="bg-white border-gray-200 dark:bg-gray-900">
+    <nav className="bg-white border-gray-200 dark:bg-gray-800">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <Link
           to="/"
@@ -86,20 +88,23 @@ const Navbar = () => {
         </Link>
         <div className="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
           {user ? (
+            <div className="flex items-center pl-2 bg-gray-500 text-white rounded-2xl ">
+              <p className="font-bold">{xp} XP ⭐ {streak}🔥</p>
             <button
               type="button"
               onClick={() => toggleDropdown("profile")}
               className="relative flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
               id="user-menu-button"
               aria-expanded={isProfileDropdownVisible ? "true" : "false"}
-            >
+              >
               <span className="sr-only">Open user menu</span>
               <img
                 className="w-8 h-8 rounded-full"
                 src="https://cdn-icons-png.flaticon.com/512/219/219988.png"
                 alt="user photo"
-              />
+                />
             </button>
+                </div>
           ) : (
             <button
               type="button"
@@ -171,7 +176,7 @@ const Navbar = () => {
           }`}
           id="navbar-user"
         >
-          <ul className="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
+          <ul className="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-800 dark:border-gray-700">
             {user &&
               userMenu.map((userMenuItem, index) => (
                 <li key={index}>

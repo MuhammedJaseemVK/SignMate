@@ -13,10 +13,10 @@ type Lesson = {
 
 const Lessons = () => {
   const { courseId } = useParams();
-  const lessons = useSelector((state) => state.lessons.lessons[courseId] ||[]);
-  const {courses} = useSelector(state => state.courses);
-  const courseInfo = courses.find(course=>course.id === courseId);
-  const [learnedLessons,setLearnedLessons] = useState([]);
+  const lessons = useSelector((state) => state.lessons.lessons[courseId] || []);
+  const { courses } = useSelector((state) => state.courses);
+  const courseInfo = courses.find((course) => course.id === courseId);
+  const [learnedLessons, setLearnedLessons] = useState([]);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -47,8 +47,10 @@ const Lessons = () => {
         });
         // dispatch(hideLoading());
         if (res.data.success) {
-          const learnedLessonsData =  res.data.data.completedLessons;
-          const learnedLessonIds = learnedLessonsData.map((lessonData)=>lessonData.lessonId);
+          const learnedLessonsData = res.data.data.completedLessons;
+          const learnedLessonIds = learnedLessonsData.map(
+            (lessonData) => lessonData.lessonId
+          );
           setLearnedLessons(learnedLessonIds);
           // dispatch(setLessons(lessons));
         }
@@ -57,17 +59,19 @@ const Lessons = () => {
         console.log(error);
       }
     };
-    if (lessons.length===0) {
+    if (lessons.length === 0) {
       getLessons();
     }
     getUserProgress();
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-10 mt-10">
-      <h1 className="text-3xl font-bold">{courseInfo.title}</h1>
-      <h1 className="text-md text-gray-50 mb-8">{courseInfo.id}</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      <h2 className="text-4xl font-extrabold dark:text-white">
+        {courseInfo.title}
+      </h2>
+      <p className="my-4 text-lg text-gray-500">Course :{courseInfo.id}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {lessons.map((lesson: Lesson) => (
           <LessonCard
             key={lesson.id}

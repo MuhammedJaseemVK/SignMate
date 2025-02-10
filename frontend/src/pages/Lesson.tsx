@@ -169,10 +169,10 @@ const Lesson = () => {
   };
 
   return (
-    <div className="flex flex-col items-center max-lg gap-4">
+    <div className="flex flex-col max-lg items-center gap-4">
       <h2 className="text-xl font-semibold mt-4">{lesson.title}</h2>
       <div className="flex justify-between items-center ">
-        <img src={lesson.image} width="480" alt="" />
+        <img src={lesson.image} width="480" className="rounded-md" alt="" />
         <div style={{ position: "relative", textAlign: "center" }}>
           <video
             ref={webcamRef}

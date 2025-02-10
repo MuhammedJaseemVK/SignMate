@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { setUser } from "../redux/features/userSlice";
 import { toast } from "react-toastify";
+import shuffleArray from "../utils/shuffleArray";
 
 const Quiz = () => {
   const [predictedSign, setPredictedSign] = useState<string>("");
@@ -15,12 +16,15 @@ const Quiz = () => {
   const socketRef = useRef<WebSocket | null>(null);
   const hasLessonCompleteSpoken = useRef<boolean>(false);
   const { user } = useSelector((state) => state.user);
-  const lessonsAvailableForQuiz = user.completedLessons.map((lesson) => ({
+  const lessonsAvailable = user.completedLessons.map((lesson) => ({
     sign: lesson.lessonId,
     image: lesson.image,
   }));
+  const lessonsAvailableForQuiz = shuffleArray(lessonsAvailable);
   const [quizindex, setQuizindex] = useState<number>(0);
-  const progress = Math.round((quizindex+1 / lessonsAvailableForQuiz.length) * 100);
+  const progress = Math.round(
+    (quizindex + 1 / lessonsAvailableForQuiz.length) * 100
+  );
   const quizNumber = `${quizindex + 1} / ${lessonsAvailableForQuiz.length}`;
 
   const navigate = useNavigate();
@@ -180,13 +184,13 @@ const Quiz = () => {
   };
 
   return (
-    <div className="flex flex-col items-center max-lg gap-4">
-      <h2 className="text-xl font-semibold mt-4">
+    <div className="flex flex-col items-center max-lg gap-4 h-full">
+      <h2 className="text-4xl font-extrabold dark:text-white">
         Sign - {targetSign.toUpperCase()}
       </h2>
       <div className="flex justify-between items-center ">
         {/* Conditionally render the image based on showImage state */}
-        {showImage && <img src={targetSignImage} width="480" alt="" />}
+        {showImage && <img src={targetSignImage} className="rounded-md" width="480" alt="" />}
         <div style={{ position: "relative", textAlign: "center" }}>
           <video
             ref={webcamRef}
@@ -227,18 +231,18 @@ const Quiz = () => {
 
       <div className="flex w-[640px] gap-2 items-center">
         <div className="flex justify-between mb-1">
-          <span className="text-sm text-blue-700 dark:text-black font-bold">
+          <span className="text-sm text-blue-700 dark:text-white font-bold">
             {progress}%
           </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 ">
           <div
             className="bg-blue-600 h-2.5 rounded-full"
             style={{ width: `${progress}%` }}
           ></div>
         </div>
         <div className="flex justify-between mb-1">
-          <span className="text-sm text-blue-700 dark:text-black font-bold whitespace-nowrap min-w-fit">
+          <span className="text-sm text-blue-700 dark:text-white font-bold whitespace-nowrap min-w-fit">
             {quizNumber}
           </span>
         </div>
