@@ -12,7 +12,7 @@ import Lessons from "./pages/Lessons";
 import Leaderboard from "./pages/Leaderboard";
 import Dashboard from "./pages/Dashboard";
 import Quiz from "./pages/Quiz";
-import CalendarPage from "./pages/CalendarPage";
+import CalendarPage from "./pages/CalenderPage/CalendarPage";
 import DailyRevisions from "./pages/DailyRevisions";
 
 function App() {
@@ -25,9 +25,7 @@ function App() {
             <Route
               index
               element={
-                <PublicRoute>
                   <Home />
-                </PublicRoute>
               }
             />
             <Route

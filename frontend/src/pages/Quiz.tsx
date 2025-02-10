@@ -21,18 +21,19 @@ const Quiz = () => {
     image: lesson.image,
   }));
   const lessonsAvailableForQuiz = shuffleArray(lessonsAvailable);
-  const [quizindex, setQuizindex] = useState<number>(0);
+  const [quizIndex, setQuizIndex] = useState<number>(0);
+  const [hasAskedForHelp, setHasAskedForHelp] = useState<boolean>(false);
   const progress = Math.round(
-    (quizindex + 1 / lessonsAvailableForQuiz.length) * 100
+    (quizIndex + 1 / lessonsAvailableForQuiz.length) * 100
   );
-  const quizNumber = `${quizindex + 1} / ${lessonsAvailableForQuiz.length}`;
+  const quizNumber = `${quizIndex + 1} / ${lessonsAvailableForQuiz.length}`;
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const clientId = useRef(uuidv4()); // Generate a unique ID for each user
-  const targetSign = lessonsAvailableForQuiz[quizindex].sign;
-  const targetSignImage = lessonsAvailableForQuiz[quizindex].image;
+  const targetSign = lessonsAvailableForQuiz[quizIndex].sign;
+  const targetSignImage = lessonsAvailableForQuiz[quizIndex].image;
 
   useEffect(() => {
     let localStream: MediaStream | null = null;
@@ -56,7 +57,7 @@ const Quiz = () => {
         if (!hasLessonCompleteSpoken.current) {
           speakText("Right answer");
           hasLessonCompleteSpoken.current = true;
-          awardXP();
+            awardXP();
         }
       }
     };
@@ -136,7 +137,8 @@ const Quiz = () => {
   };
 
   const toggleImageVisibility = () => {
-    setShowImage((prev) => !prev); // Toggle the image visibility
+    setShowImage((prev) => !prev);
+    setHasAskedForHelp(true);
   };
 
   const speakText = (text: string) => {
@@ -148,38 +150,39 @@ const Quiz = () => {
   };
 
   const awardXP = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "/api/v1/user/award-xp",
-        { xpPoints: 10 },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.data.success) {
-        console.log("XP awarded successfully");
-        toast.success("Awarded 10XP for you!");
-        dispatch(setUser(res.data.user));
-      } else {
-        console.log("Failed to award XP");
-      }
-    } catch (error) {
-      console.error("Error awarding XP:", error);
-    }
+    if(!hasAskedForHelp){
 
-    setTimeout(() => {
-      navigateToNextQuiz();
-      setIsTargetSignPredicted(false);
-      hasLessonCompleteSpoken.current = false;
-    }, 3000);
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.post(
+          "/api/v1/user/award-xp",
+          { xpPoints: 10 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.data.success) {
+          console.log("XP awarded successfully");
+          toast.success("Awarded 10XP for you!");
+          dispatch(setUser(res.data.user));
+        } else {
+          console.log("Failed to award XP");
+        }
+      } catch (error) {
+        console.error("Error awarding XP:", error);
+      }
+    }
+    navigateToNextQuiz();
+    setIsTargetSignPredicted(false);
+    hasLessonCompleteSpoken.current = false;
   };
 
   const navigateToNextQuiz = () => {
     const avaiableQuizLength = lessonsAvailableForQuiz.length;
-    const currentIndex = quizindex + 1;
+    const currentIndex = quizIndex + 1;
     if (currentIndex > avaiableQuizLength - 1) {
       navigate("/dashboard");
     } else {
-      setQuizindex(currentIndex);
+      setQuizIndex(currentIndex);
+      setHasAskedForHelp(false);
     }
   };
 
@@ -189,8 +192,14 @@ const Quiz = () => {
         Sign - {targetSign.toUpperCase()}
       </h2>
       <div className="flex justify-between items-center ">
-        {/* Conditionally render the image based on showImage state */}
-        {showImage && <img src={targetSignImage} className="rounded-md" width="480" alt="" />}
+        {showImage && (
+          <img
+            src={targetSignImage}
+            className="rounded-md"
+            width="480"
+            alt=""
+          />
+        )}
         <div style={{ position: "relative", textAlign: "center" }}>
           <video
             ref={webcamRef}
@@ -221,7 +230,6 @@ const Quiz = () => {
       <h3 className="text-bold text-4xl ">
         {isTargetSignPredicted ? "Moving to next question" : "Keep signing"}
       </h3>
-      {/* Help button to show the image */}
       <button
         className="w-md text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
         onClick={toggleImageVisibility}

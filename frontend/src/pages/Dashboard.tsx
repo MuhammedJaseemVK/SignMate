@@ -1,10 +1,11 @@
 import React from 'react'
+import HeatMap from '../components/Heatmap/Heatmap'
 
 type Props = {}
 
 const Dashboard = (props: Props) => {
   return (
-    <div>Dashboard</div>
+    <HeatMap />
   )
 }
 
