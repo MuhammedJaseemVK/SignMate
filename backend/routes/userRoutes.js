@@ -7,6 +7,7 @@ const {
   markLessonAsCompleted,
   getUsersByXP,
   awardXPController,
+  updateRevision,
 } = require("../controllers/userController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
@@ -19,5 +20,6 @@ router.post("/lesson/complete", authMiddleware, markLessonAsCompleted);
 router.get("/progress", authMiddleware, getUserProgress);
 router.get("/leaderboard", authMiddleware, getUsersByXP);
 router.post("/award-xp", authMiddleware, awardXPController);
+router.post("/update-revision",authMiddleware, updateRevision);
 
 module.exports = router;

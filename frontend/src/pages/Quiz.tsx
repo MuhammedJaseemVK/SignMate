@@ -20,7 +20,7 @@ const Quiz = () => {
     image: lesson.image,
   }));
   const [quizindex, setQuizindex] = useState<number>(0);
-  const progress = (quizindex / lessonsAvailableForQuiz.length) * 100;
+  const progress = Math.round((quizindex+1 / lessonsAvailableForQuiz.length) * 100);
   const quizNumber = `${quizindex + 1} / ${lessonsAvailableForQuiz.length}`;
 
   const navigate = useNavigate();

@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import moment from "moment";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { setUser } from "../redux/features/userSlice";
 
 const DailyRevisions = () => {
   const [predictedSign, setPredictedSign] = useState("");
@@ -12,20 +15,18 @@ const DailyRevisions = () => {
   const socketRef = useRef(null);
   const hasLessonCompleteSpoken = useRef(false);
   const { user } = useSelector((state) => state.user);
+  const [showModal, setShowModal] = useState<boolean>(true);
+  const dispatch = useDispatch();
 
-  // Get completed lessons from Redux state
   const completedLessons = user.completedLessons || [];
 
-  // Get today's date
   const today = moment().format("YYYY-MM-DD");
 
-  // Filter lessons that are due today
   const lessonsDueToday = completedLessons.filter((lesson) => {
     const nextReviewDate = moment(lesson.nextReviewDate).format("YYYY-MM-DD");
     return nextReviewDate === today;
   });
 
-  // Check if there are lessons due today
   const lessonsAvailableForToday = lessonsDueToday.map((lesson) => ({
     sign: lesson.lessonId,
     image: lesson.image,
@@ -59,7 +60,7 @@ const DailyRevisions = () => {
         if (!hasLessonCompleteSpoken.current) {
           speakText("Right answer");
           hasLessonCompleteSpoken.current = true;
-          markLessonComplete();
+          setShowModal(true);
         }
       }
     };
@@ -118,14 +119,6 @@ const DailyRevisions = () => {
     window.speechSynthesis.speak(speech);
   };
 
-  const markLessonComplete = async () => {
-    setTimeout(() => {
-      navigateToNextQuiz();
-      setIsTargetSignPredicted(false);
-      hasLessonCompleteSpoken.current = false;
-    }, 3000);
-  };
-
   const navigateToNextQuiz = () => {
     const availableQuizLength = lessonsAvailableForToday.length;
     if (quizIndex + 1 >= availableQuizLength) {
@@ -137,6 +130,28 @@ const DailyRevisions = () => {
 
   const toggleImageVisibility = () => {
     setShowImage((prev) => !prev); // Toggle the image visibility
+  };
+
+  const markRevisionAsCompleted = async (difficulty: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `/api/v1/user/update-revision`,
+        { lessonId: targetSign, difficulty },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.success) {
+        toast.success("Awarded 20XP for you!");
+        const { user } = res.data;
+        dispatch(setUser(user));
+      }
+    } catch (error) {
+      console.error("Error marking lesson complete:", error);
+    }
+    navigateToNextQuiz();
+    setShowModal(false);
+    setIsTargetSignPredicted(false);
+    hasLessonCompleteSpoken.current = false;
   };
 
   return (
@@ -205,6 +220,35 @@ const DailyRevisions = () => {
           </span>
         </div>
       </div>
+
+      {/* **Modal Implementation** */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg dark:text-white dark:bg-gray-900 text-black m-6">
+            <h2 className="text-lg font-semibold mb-4 text-center">How was it?</h2>
+            <div className="flex gap-4">
+              <button
+                onClick={() => markRevisionAsCompleted("easy")}
+                className="bg-green-500 text-white px-4 py-2 rounded"
+              >
+                Easy
+              </button>
+              <button
+                onClick={() => markRevisionAsCompleted("medium")}
+                className="bg-yellow-500 text-white px-4 py-2 rounded"
+              >
+                Medium
+              </button>
+              <button
+                onClick={() => markRevisionAsCompleted("difficult")}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Hard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

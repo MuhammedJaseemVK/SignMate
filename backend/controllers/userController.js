@@ -354,6 +354,60 @@ const awardXPController = async (req, res) => {
   }
 };
 
+// Spaced repetition constants
+const INTERVALS = { easy: 3, medium: 2, hard: 1 };
+const EASE_FACTORS = { easy: 1.2, medium: 1.0, hard: 0.8 };
+
+// Update lesson revision status
+const updateRevision = async (req, res) => {
+  try {
+    const { userId, lessonId, difficulty } = req.body;
+
+    if (
+      !userId ||
+      !lessonId ||
+      !["easy", "medium", "hard"].includes(difficulty)
+    ) {
+      return res.status(400).json({ error: "Invalid input" });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const lesson = user.completedLessons.find((l) => l.lessonId === lessonId);
+    if (!lesson) return res.status(404).json({ error: "Lesson not found" });
+
+    // Adjust interval and ease factor
+    lesson.easeFactor = Math.max(
+      1.3,
+      lesson.easeFactor * EASE_FACTORS[difficulty]
+    );
+    lesson.interval = Math.ceil(lesson.interval * INTERVALS[difficulty]);
+    lesson.repetitions += 1;
+
+    // Update next review date
+    lesson.nextReviewDate = new Date();
+    lesson.nextReviewDate.setDate(
+      lesson.nextReviewDate.getDate() + lesson.interval
+    );
+
+    // **Increase XP by 20**
+    user.xp = (user.xp || 0) + 20;
+
+    await user.save();
+    res.json({
+      success: true,
+      message: "Lesson updated successfully",
+      nextReviewDate: lesson.nextReviewDate,
+      xp: user.xp, // **Include updated XP in response**
+    });
+  } catch (error) {
+    console.error("Error updating revision:", error);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+};
+
+
 module.exports = {
   registerController,
   loginController,
@@ -362,4 +416,5 @@ module.exports = {
   getUserProgress,
   getUsersByXP,
   awardXPController,
+  updateRevision,
 };
