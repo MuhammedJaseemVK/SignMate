@@ -49,6 +49,7 @@ const UserSchema = new mongoose.Schema(
     completedLessons: [CompletedLessonSchema], // Stores lesson completion & spaced repetition data
     xp: { type: Number, default: 0 },
     streak: { type: Number, default: 1 },
+    maxStreak: { type: Number, default: 1 },
     lastLoginedDay: { type: Date, default: null },
   },
   { timestamps: true }

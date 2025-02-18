@@ -19,6 +19,7 @@ app.use(morgan("dev"));
 app.use("/api/v1/user", require("./routes/userRoutes"));
 app.use("/api/v1/courses", require("./routes/courseRoutes"));
 app.use("/api/v1/lessons", require("./routes/lessonRoutes"));
+require("./cron/cronJobs");
 
 const port = process.env.PORT || 8080;
 

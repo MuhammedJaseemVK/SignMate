@@ -147,33 +147,44 @@ const authController = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    // Streak logic
-    if (!user.lastLoginedDay) {
-      user.streak = 1; // First-time login
-    } else {
+    if (user.lastLoginedDay) {
       const lastLoginedDay = new Date(user.lastLoginedDay);
       lastLoginedDay.setHours(0, 0, 0, 0);
 
       if (lastLoginedDay.getTime() === today.getTime()) {
         console.log("User already logged in today");
-      } else if (lastLoginedDay.getTime() === yesterday.getTime()) {
+        return res.status(200).json({
+          success: true,
+          message: "Already logged in today.",
+          data: user,
+        });
+      }
+
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (lastLoginedDay.getTime() === yesterday.getTime()) {
         user.streak += 1; // Continue streak
       } else {
         user.streak = 1; // Reset streak
       }
+    } else {
+      user.streak = 1; // First-time login
+    }
+
+    // Update max streak if current streak is the highest
+    if (!user.maxStreak || user.streak > user.maxStreak) {
+      user.maxStreak = user.streak;
     }
 
     user.lastLoginedDay = today;
-
     await user.save();
 
-    user.password = undefined;
+    user.password = undefined; // Hide password
 
     return res.status(200).json({
       success: true,
+      message: "Login successful.",
       data: user,
     });
   } catch (error) {
