@@ -31,10 +31,10 @@ export default function Heatmap() {
   });
 
   return (
-    <div className="w-[500px]">
-      <h1>Learning Heatmap</h1>
+    <div className="w-[250px]">
+      <h4 className="text-black dark:text-white text-center">Learning heatmap</h4>
       <CalendarHeatmap
-        startDate={shiftDate(today, -150)}
+        startDate={shiftDate(today, -120)}
         endDate={today}
         values={randomValues}
         classForValue={(value) => {

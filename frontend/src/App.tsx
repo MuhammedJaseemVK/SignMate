@@ -10,7 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoutes";
 import Courses from "./pages/Courses";
 import Lessons from "./pages/Lessons";
 import Leaderboard from "./pages/Leaderboard";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/Dashboard/Dashboard";
 import Quiz from "./pages/Quiz";
 import CalendarPage from "./pages/CalenderPage/CalendarPage";
 import DailyRevisions from "./pages/DailyRevisions";

@@ -34,7 +34,7 @@ const WordCloudComponent = () => {
   }));
   return (
     <div>
-      <h4 className="text-black dark:text-white">Lessons learnt</h4>
+      <h4 className="text-black dark:text-white text-center">Lessons learnt</h4>
       <WordCloud words={lessonsLearnt} options={options} />
     </div>
   );
