@@ -1,12 +1,16 @@
-import React from 'react'
-import HeatMap from '../components/Heatmap/Heatmap'
+import React from "react";
+import HeatMap from "../components/Heatmap/Heatmap";
+import WordCloudComponent from "../components/WordCloudComponent";
 
-type Props = {}
+type Props = {};
 
 const Dashboard = (props: Props) => {
   return (
-    <HeatMap />
-  )
-}
+    <div className="">
+      <HeatMap />
+      <WordCloudComponent />
+    </div>
+  );
+};
 
-export default Dashboard
+export default Dashboard;

@@ -23,6 +23,7 @@ const Navbar = () => {
     { name: "Courses", path: "/courses" },
     { name: "Quiz", path: "/quiz" },
     { name: "Revise", path: "/revisions" },
+    { name: "Fingerspelling", path: "/fingerspelling" },
     { name: "Dashboard", path: "/dashboard" },
     { name: "Leaderboard", path: "/leaderboard" },
   ];
@@ -126,6 +127,11 @@ const Navbar = () => {
                 </span>
                 <span className="block text-sm  text-gray-500 truncate dark:text-gray-400">
                   {user.email}
+                </span>
+              </div>
+              <div className="px-4 py-3">
+                <span className="block text-sm text-gray-900 dark:text-white">
+                  Max streak: {user.maxStreak} 🔥
                 </span>
               </div>
               <ul className="py-2" aria-labelledby="user-menu-button">

@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import Quiz from "./pages/Quiz";
 import CalendarPage from "./pages/CalenderPage/CalendarPage";
 import DailyRevisions from "./pages/DailyRevisions";
+import FingerSpelling from "./pages/FingerSpelling";
 
 function App() {
   return (
@@ -22,12 +23,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route
-              index
-              element={
-                  <Home />
-              }
-            />
+            <Route index element={<Home />} />
             <Route
               path="register"
               element={
@@ -105,6 +101,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DailyRevisions />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/fingerspelling"
+              element={
+                <ProtectedRoute>
+                  <FingerSpelling />
                 </ProtectedRoute>
               }
             />
