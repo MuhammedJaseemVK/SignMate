@@ -15,7 +15,7 @@ const DailyRevisions = () => {
   const socketRef = useRef(null);
   const hasLessonCompleteSpoken = useRef(false);
   const { user } = useSelector((state) => state.user);
-  const [showModal, setShowModal] = useState<boolean>(true);
+  const [showModal, setShowModal] = useState<boolean>(false);
   const dispatch = useDispatch();
 
   const completedLessons = user.completedLessons || [];
@@ -204,7 +204,7 @@ const DailyRevisions = () => {
 
       <div className="flex w-[640px] gap-2 items-center">
         <div className="flex justify-between mb-1">
-          <span className="text-sm text-blue-700 dark:text-black font-bold">
+          <span className="text-sm text-blue-700 dark:text-white font-bold">
             {progress}%
           </span>
         </div>
@@ -215,7 +215,7 @@ const DailyRevisions = () => {
           ></div>
         </div>
         <div className="flex justify-between mb-1">
-          <span className="text-sm text-blue-700 dark:text-black font-bold whitespace-nowrap min-w-fit">
+          <span className="text-sm text-blue-700 dark:text-white font-bold whitespace-nowrap min-w-fit">
             {quizNumber}
           </span>
         </div>

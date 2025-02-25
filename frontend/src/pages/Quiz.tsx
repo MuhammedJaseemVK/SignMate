@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { setUser } from "../redux/features/userSlice";
 import { toast } from "react-toastify";
-import shuffleArray from "../utils/shuffleArray";
+// import shuffleArray from "../utils/shuffleArray";
 
 const Quiz = () => {
   const [predictedSign, setPredictedSign] = useState<string>("");
@@ -20,11 +20,17 @@ const Quiz = () => {
     sign: lesson.lessonId,
     image: lesson.image,
   }));
-  const lessonsAvailableForQuiz = shuffleArray(lessonsAvailable);
-  const [quizIndex, setQuizIndex] = useState<number>(0);
-  const [hasAskedForHelp, setHasAskedForHelp] = useState<boolean>(false);
+  const lessonsAvailableForQuiz = lessonsAvailable;
+
+  const [quizIndex, setQuizIndex] = useState<number>(() => {
+    return Number(localStorage.getItem("quizIndex")) || 0;
+  });
+
+  // const [quizIndex, setQuizIndex] = useState<number>(0);
+  // const [hasAskedForHelp, setHasAskedForHelp] = useState<boolean>(false);
+  const hasAskedForHelp = useRef<boolean>(false);
   const progress = Math.round(
-    (quizIndex + 1 / lessonsAvailableForQuiz.length) * 100
+    ((quizIndex + 1) / lessonsAvailableForQuiz.length) * 100
   );
   const quizNumber = `${quizIndex + 1} / ${lessonsAvailableForQuiz.length}`;
 
@@ -57,7 +63,7 @@ const Quiz = () => {
         if (!hasLessonCompleteSpoken.current) {
           speakText("Right answer");
           hasLessonCompleteSpoken.current = true;
-            awardXP();
+          awardXP();
         }
       }
     };
@@ -138,7 +144,8 @@ const Quiz = () => {
 
   const toggleImageVisibility = () => {
     setShowImage((prev) => !prev);
-    setHasAskedForHelp(true);
+    // setHasAskedForHelp(true);
+    hasAskedForHelp.current = true;
   };
 
   const speakText = (text: string) => {
@@ -150,8 +157,7 @@ const Quiz = () => {
   };
 
   const awardXP = async () => {
-    if(!hasAskedForHelp){
-
+    if (!hasAskedForHelp.current) {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.post(
@@ -175,14 +181,29 @@ const Quiz = () => {
     hasLessonCompleteSpoken.current = false;
   };
 
+  // const navigateToNextQuiz = () => {
+  //   const avaiableQuizLength = lessonsAvailableForQuiz.length;
+  //   const currentIndex = quizIndex + 1;
+  //   if (currentIndex > avaiableQuizLength - 1) {
+  //     navigate("/dashboard");
+  //   } else {
+  //     setQuizIndex(currentIndex);
+  //     setHasAskedForHelp(false);
+  //   }
+  // };
+
   const navigateToNextQuiz = () => {
-    const avaiableQuizLength = lessonsAvailableForQuiz.length;
+    const availableQuizLength = lessonsAvailableForQuiz.length;
     const currentIndex = quizIndex + 1;
-    if (currentIndex > avaiableQuizLength - 1) {
+
+    if (currentIndex >= availableQuizLength) {
+      localStorage.removeItem("quizIndex"); // Clear stored index after completion
       navigate("/dashboard");
     } else {
       setQuizIndex(currentIndex);
-      setHasAskedForHelp(false);
+      localStorage.setItem("quizIndex", String(currentIndex)); // Persist index
+      // setHasAskedForHelp(false);
+      hasAskedForHelp.current = false;
     }
   };
 
