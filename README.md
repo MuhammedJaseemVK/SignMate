@@ -1,3 +1,7 @@
+# Demo video
+
+https://github.com/user-attachments/assets/5b8b8f29-a2fe-49f9-a107-fd25598f6f01
+
 # Project Setup Guide
 
 This guide explains how to set up and run the frontend and backend of your project.
